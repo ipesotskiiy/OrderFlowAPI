@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -85,6 +88,8 @@ DATABASES = {
         'PORT': os.environ.get("DB_PORT"),
     }
 }
+
+AUTH_USER_MODEL = "accounts.User"
 
 
 # Password validation
