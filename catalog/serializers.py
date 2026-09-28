@@ -48,7 +48,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
         height_cm = attrs.get("height_cm")
         if height_cm is not None and height_cm <= 0:
-            raise serializers.ValidationError({"height_cm": "Высота должна быть больше 0"})
+            raise serializers.ValidationError(
+                {"height_cm": "Высота должна быть больше 0"}
+            )
 
         return attrs
 
