@@ -15,6 +15,15 @@ class CategorySerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
+    def validate_name(self, value):
+        if Category.objects.filter(name__iexact=value).exists():
+            if self.instance:
+                if Category.objects.filter(name__iexact=value).exclude(id=self.instance.id).exists():
+                    raise serializers.ValidationError("Category with this name already exists.")
+                return value
+            raise serializers.ValidationError("Category with this name already exists.")
+        return value
+
 
 class ProductSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
