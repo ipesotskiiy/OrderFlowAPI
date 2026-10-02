@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
 
     'accounts',
-    'catalog'
+    'catalog',
+    'warehouses'
 ]
 
 MIDDLEWARE = [
