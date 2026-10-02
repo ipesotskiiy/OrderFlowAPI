@@ -158,32 +158,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Category'
           description: ''
-    put:
-      operationId: v1_catalog_categories_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Category.
-        required: true
-      tags:
-      - v1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Category'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Category'
-          description: ''
     patch:
       operationId: v1_catalog_categories_partial_update
       parameters:
@@ -224,7 +198,13 @@ paths:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Category deleted successfully.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryProtectedError'
+          description: Category cannot be deleted because products depend on it.
   /api/v1/catalog/products/:
     get:
       operationId: v1_catalog_products_list
@@ -309,32 +289,6 @@ paths:
         required: true
       tags:
       - v1
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Product'
-          description: ''
-    put:
-      operationId: v1_catalog_products_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Product.
-        required: true
-      tags:
-      - v1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Product'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -432,6 +386,13 @@ components:
       - id
       - name
       - updated_at
+    CategoryProtectedError:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
     HealthCheckResponse:
       type: object
       properties:

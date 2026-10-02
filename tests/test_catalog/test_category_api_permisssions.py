@@ -1,7 +1,7 @@
 import pytest
 from rest_framework import status
 
-from catalog.models import Category
+from catalog.models import Category, Product
 
 pytestmark = pytest.mark.django_db
 
@@ -210,6 +210,20 @@ def test_staff_can_update_category(api_client, first_category, staff_user_obj):
     assert first_category_obj.minimum_age == old_minimum_age
 
 
+def test_staff_cant_put_update_category(api_client, first_category, staff_user_obj):
+    api_client.force_authenticate(staff_user_obj)
+    category_data = {
+            "name": "Напиточки",
+        }
+    response = api_client.put(
+        f"/api/v1/catalog/categories/{first_category.id}/",
+        data=category_data
+    )
+    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    cat_obj = Category.objects.get(id=first_category.id)
+    assert cat_obj.name == first_category.name
+
+
 def test_staff_can_delete_category(api_client, first_category, staff_user_obj):
     api_client.force_authenticate(staff_user_obj)
     response = api_client.delete(
@@ -219,6 +233,23 @@ def test_staff_can_delete_category(api_client, first_category, staff_user_obj):
 
     categories_queryset = Category.objects.filter(id=first_category.id)
     assert len(categories_queryset) == 0
+
+def test_staff_cant_delete_category_with_products(
+        api_client,
+        first_category,
+        first_category_first_product,
+        staff_user_obj
+):
+    api_client.force_authenticate(staff_user_obj)
+    response = api_client.delete(
+        f"/api/v1/catalog/categories/{first_category.id}/",
+    )
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert (response.json()["detail"] ==
+            "Cannot delete this object because other records depend on it.")
+
+    assert len(Category.objects.all()) == 1
+    assert len(Product.objects.all()) == 1
 
 
 def test_create_category_api_minimum_age_equal_zero(api_client, staff_user_obj):

@@ -566,6 +566,35 @@ def test_success_change_product_name(
     assert product_obj.color == first_category_first_product.color
     assert product_obj.is_active == first_category_first_product.is_active
 
+
+def test_staff_cant_put_change_product_(
+    api_client,
+    staff_user_obj,
+    first_category,
+    first_category_first_product,
+):
+    product_data = {
+        "name": "Кока Колка",
+        "manufacturer_name": "Кока Кола инк",
+        "category": first_category,
+        "minimum_age": 7,
+        "sku": "H2O-1",
+        "price": Decimal("100"),
+        "weight_kg": Decimal("0.5"),
+        "height_cm": Decimal("30"),
+        "color": "black",
+    }
+    api_client.force_authenticate(staff_user_obj)
+    response = api_client.put(
+        f"/api/v1/catalog/products/{first_category_first_product.id}/",
+        data=product_data,
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    product_obj = Product.objects.get(id=first_category_first_product.id)
+    assert product_obj.name == first_category_first_product.name
+
 def test_success_change_product_color(
     api_client,
     staff_user_obj,
