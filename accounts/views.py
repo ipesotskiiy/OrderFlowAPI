@@ -1,4 +1,5 @@
 from django.db.utils import IntegrityError
+from drf_spectacular.utils import extend_schema, inline_serializer
 from psycopg.errors import UniqueViolation
 from rest_framework import status, serializers
 from rest_framework.permissions import AllowAny
@@ -11,7 +12,13 @@ from accounts.serializers import MeSerializer, UserRegistrationSerializer
 # Create your views here.
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = UserRegistrationSerializer
 
+    @extend_schema(
+        responses={
+            status.HTTP_201_CREATED: serializer_class
+        }
+    )
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -30,6 +37,14 @@ class RegistrationView(APIView):
 
 
 class MeView(APIView):
+    @extend_schema(
+        responses=inline_serializer(
+            name="MeResponse",
+            fields={
+                "user": MeSerializer(),
+            }
+        )
+    )
     def get(self, request):
         return Response(
             {
