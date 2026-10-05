@@ -6,6 +6,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from catalog.models import Category, Product
+from warehouses.models import Warehouse, WarehouseManagerAssignment
 
 
 @pytest.fixture
@@ -28,6 +29,18 @@ def user_data():
 def user_obj(user_data):
     user = User.objects.create_user(
         email=user_data["email"],
+        password=user_data["password"],
+        first_name=user_data["first_name"],
+        last_name=user_data["last_name"],
+        birth_date=user_data["birth_date"],
+    )
+    return user
+
+
+@pytest.fixture
+def second_user_obj(user_data):
+    user = User.objects.create_user(
+        email="test_another_user@mail.com",
         password=user_data["password"],
         first_name=user_data["first_name"],
         last_name=user_data["last_name"],
@@ -127,3 +140,89 @@ def staff_user_obj(user_data):
         is_staff=True
     )
     return user
+
+
+@pytest.fixture
+def first_warehouse():
+    warehouse_data = {
+        "name": "first_warehouse",
+        "code": "WR1-A1",
+        "address": "Rostov-on-Don, bolshaya sadovaya street 34",
+    }
+
+    return Warehouse.objects.create(**warehouse_data)
+
+
+@pytest.fixture
+def second_warehouse():
+    warehouse_data = {
+        "name": "second_warehouse",
+        "code": "WR1-A2",
+        "address": "Rostov-on-Don, bolshaya sadovaya street 38",
+    }
+
+    return Warehouse.objects.create(**warehouse_data)
+
+
+@pytest.fixture
+def first_warehouse_manager_assignment(
+    first_warehouse,
+    user_obj,
+):
+    warehouse_manager_assignment_data = {
+        "warehouse": first_warehouse,
+        "user": user_obj
+    }
+    return WarehouseManagerAssignment.objects.create(
+        **warehouse_manager_assignment_data
+    )
+
+@pytest.fixture
+def second_warehouse_manager_assignment(
+        second_warehouse,
+        user_obj,
+):
+    warehouse_manager_assignment_data = {
+        "warehouse": second_warehouse,
+        "user": user_obj
+    }
+    return WarehouseManagerAssignment.objects.create(
+        **warehouse_manager_assignment_data
+    )
+
+@pytest.fixture
+def second_warehouse_manager_assignment_another_user(
+        second_warehouse,
+        second_user_obj,
+):
+    warehouse_manager_assignment_data = {
+        "warehouse": second_warehouse,
+        "user": second_user_obj
+    }
+    return WarehouseManagerAssignment.objects.create(
+        **warehouse_manager_assignment_data
+    )
+
+@pytest.fixture
+def third_warehouse():
+    warehouse_data = {
+        "name": "second_warehouse",
+        "code": "WR1-A3",
+        "address": "Rostov-on-Don, bolshaya sadovaya street 38",
+    }
+
+    return Warehouse.objects.create(**warehouse_data)
+
+
+@pytest.fixture
+def third_warehouse_manager_assignment_another_user(
+        third_warehouse,
+        second_user_obj,
+):
+    warehouse_manager_assignment_data = {
+        "warehouse": third_warehouse,
+        "user": second_user_obj
+    }
+    return WarehouseManagerAssignment.objects.create(
+        **warehouse_manager_assignment_data
+    )
