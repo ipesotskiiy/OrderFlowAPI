@@ -576,7 +576,7 @@ def test_staff_cant_put_change_product_(
     product_data = {
         "name": "Кока Колка",
         "manufacturer_name": "Кока Кола инк",
-        "category": first_category,
+        "category": first_category.id,
         "minimum_age": 7,
         "sku": "H2O-1",
         "price": Decimal("100"),
