@@ -1,5 +1,7 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 
+from stocks.filters import StockFilter
 from stocks.models import Stock
 from stocks.permissions import IsAdminOrStockWarehouseManagerReadAndUpdate
 from stocks.serializers import StockSerializer
@@ -10,6 +12,8 @@ class StockViewSet(viewsets.ModelViewSet):
     serializer_class = StockSerializer
     queryset = Stock.objects.all()
     permission_classes = (IsAdminOrStockWarehouseManagerReadAndUpdate,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = StockFilter
     http_method_names = [
         "get",
         "post",
