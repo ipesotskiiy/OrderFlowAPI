@@ -354,6 +354,136 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthCheckResponse'
           description: ''
+  /api/v1/stocks/:
+    get:
+      operationId: v1_stocks_list
+      parameters:
+      - in: query
+        name: product
+        schema:
+          type: integer
+      - in: query
+        name: quantity
+        schema:
+          type: integer
+      - in: query
+        name: quantity_max
+        schema:
+          type: integer
+      - in: query
+        name: quantity_min
+        schema:
+          type: integer
+      - in: query
+        name: reserved_quantity
+        schema:
+          type: integer
+      - in: query
+        name: reserved_quantity_max
+        schema:
+          type: integer
+      - in: query
+        name: reserved_quantity_min
+        schema:
+          type: integer
+      - in: query
+        name: warehouse
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stock'
+          description: ''
+    post:
+      operationId: v1_stocks_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Stock'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+          description: ''
+  /api/v1/stocks/{id}/:
+    get:
+      operationId: v1_stocks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Stock.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+          description: ''
+    patch:
+      operationId: v1_stocks_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Stock.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStock'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+          description: ''
+    delete:
+      operationId: v1_stocks_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Stock.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/warehouses/:
     get:
       operationId: v1_warehouses_list
@@ -675,6 +805,40 @@ components:
           format: date-time
           readOnly: true
           title: Product update
+    PatchedStock:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        warehouse:
+          type: integer
+        product:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Stock quantity product in warehouse
+        reserved_quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          readOnly: true
+          title: Reserved quantity product in warehouse
+        available_quantity:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Stock created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Stock updated
     PatchedWarehouse:
       type: object
       properties:
@@ -774,6 +938,49 @@ components:
       - sku
       - updated_at
       - weight_kg
+    Stock:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        warehouse:
+          type: integer
+        product:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Stock quantity product in warehouse
+        reserved_quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          readOnly: true
+          title: Reserved quantity product in warehouse
+        available_quantity:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Stock created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Stock updated
+      required:
+      - available_quantity
+      - created_at
+      - id
+      - product
+      - quantity
+      - reserved_quantity
+      - updated_at
+      - warehouse
     TokenBlacklist:
       type: object
       properties:
