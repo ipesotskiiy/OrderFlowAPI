@@ -6,6 +6,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from catalog.models import Category, Product
+from stocks.models import Stock
 from warehouses.models import Warehouse, WarehouseManagerAssignment
 
 
@@ -179,8 +180,8 @@ def first_warehouse_manager_assignment(
 
 @pytest.fixture
 def second_warehouse_manager_assignment(
-        second_warehouse,
-        user_obj,
+    second_warehouse,
+    user_obj,
 ):
     warehouse_manager_assignment_data = {
         "warehouse": second_warehouse,
@@ -192,8 +193,8 @@ def second_warehouse_manager_assignment(
 
 @pytest.fixture
 def second_warehouse_manager_assignment_another_user(
-        second_warehouse,
-        second_user_obj,
+    second_warehouse,
+    second_user_obj,
 ):
     warehouse_manager_assignment_data = {
         "warehouse": second_warehouse,
@@ -206,18 +207,27 @@ def second_warehouse_manager_assignment_another_user(
 @pytest.fixture
 def third_warehouse():
     warehouse_data = {
-        "name": "second_warehouse",
+        "name": "third_warehouse",
         "code": "WR1-A3",
         "address": "Rostov-on-Don, bolshaya sadovaya street 38",
     }
 
     return Warehouse.objects.create(**warehouse_data)
 
+@pytest.fixture
+def fourth_warehouse():
+    warehouse_data = {
+        "name": "fourth_warehouse",
+        "code": "WR1-A4",
+        "address": "Rostov-on-Don, bolshaya sadovaya street 38",
+    }
+
+    return Warehouse.objects.create(**warehouse_data)
 
 @pytest.fixture
 def third_warehouse_manager_assignment_another_user(
-        third_warehouse,
-        second_user_obj,
+    third_warehouse,
+    second_user_obj,
 ):
     warehouse_manager_assignment_data = {
         "warehouse": third_warehouse,
@@ -226,3 +236,79 @@ def third_warehouse_manager_assignment_another_user(
     return WarehouseManagerAssignment.objects.create(
         **warehouse_manager_assignment_data
     )
+
+
+@pytest.fixture
+def first_stock_with_first_warehouse_and_first_product(
+    first_warehouse,
+    first_category_first_product,
+):
+    stock_data = {
+        "warehouse": first_warehouse,
+        "product": first_category_first_product,
+        "quantity": 10,
+        "reserved_quantity": 2,
+    }
+
+    return Stock.objects.create(**stock_data)
+
+
+@pytest.fixture
+def second_stock_with_first_warehouse_and_second_product(
+    first_warehouse,
+    first_category_second_product,
+):
+    stock_data = {
+        "warehouse": first_warehouse,
+        "product": first_category_second_product,
+        "quantity": 20,
+        "reserved_quantity": 5,
+    }
+
+    return Stock.objects.create(**stock_data)
+
+
+@pytest.fixture
+def third_stock_with_third_warehouse_and_third_product(
+    third_warehouse,
+    second_category_first_product,
+):
+    stock_data = {
+        "warehouse": third_warehouse,
+        "product": second_category_first_product,
+        "quantity": 30,
+        "reserved_quantity": 10,
+    }
+
+    return Stock.objects.create(**stock_data)
+
+
+@pytest.fixture
+def fourth_stock_with_second_warehouse_and_second_product(
+    second_warehouse,
+    first_category_second_product,
+):
+    stock_data = {
+        "warehouse": second_warehouse,
+        "product": first_category_second_product,
+        "quantity": 40,
+        "reserved_quantity": 20,
+    }
+
+    return Stock.objects.create(**stock_data)
+
+
+@pytest.fixture
+def first_category_third_product(first_category):
+    product_data = {
+        "name": "Fanta",
+        "manufacturer_name": "Кока Кола инк",
+        "category": first_category,
+        "minimum_age": 7,
+        "sku": "H2O-8",
+        "price": Decimal("100"),
+        "weight_kg": Decimal("0.5"),
+        "height_cm": Decimal("30"),
+        "color": "black",
+    }
+    return Product.objects.create(**product_data)
