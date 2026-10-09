@@ -1,3 +1,5 @@
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -24,11 +26,14 @@ class OrderViewSet(
 ):
     serializer_class = OrderCreateSerializer
     queryset = Order.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_fields = ("status", "warehouse")
+    ordering_fields = ("created_at",)
+    ordering = ("-created_at",)
     http_method_names = [
         "get",
         "post",
         "patch",
-        "delete",
         "head",
         "options",
     ]
