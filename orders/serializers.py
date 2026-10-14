@@ -16,6 +16,11 @@ class OrderItemCreateSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    quantity = serializers.IntegerField(
+        label="Quantity product in order",
+        max_value=2147483647,
+        min_value=1
+    )
     class Meta:
         model = OrderItem
         fields = (

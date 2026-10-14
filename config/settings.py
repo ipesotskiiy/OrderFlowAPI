@@ -155,6 +155,10 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     # ДРУГИЕ НАСТРОЙКИ
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+        "config.schema_hooks.enforce_non_empty_order_items",
+    ],
 }
 
 # Internationalization

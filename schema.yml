@@ -354,6 +354,114 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthCheckResponse'
           description: ''
+  /api/v1/orders/:
+    get:
+      operationId: v1_orders_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - confirmed
+          - draft
+          - expired
+          - reserved
+        description: |-
+          * `draft` - Draft
+          * `reserved` - Reserved
+          * `confirmed` - Confirmed
+          * `cancelled` - Cancelled
+          * `expired` - Expired
+      - in: query
+        name: warehouse
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+          description: ''
+    post:
+      operationId: v1_orders_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderCreate'
+          description: ''
+  /api/v1/orders/{id}/:
+    get:
+      operationId: v1_orders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Order.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    patch:
+      operationId: v1_orders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Order.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderUpdate'
+          description: ''
   /api/v1/stocks/:
     get:
       operationId: v1_stocks_list
@@ -723,6 +831,169 @@ components:
           $ref: '#/components/schemas/Me'
       required:
       - user
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        warehouse:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order updated
+      required:
+      - created_at
+      - customer
+      - id
+      - order_items
+      - status
+      - updated_at
+      - warehouse
+    OrderCreate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        warehouse:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemCreate'
+          minItems: 1
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order updated
+      required:
+      - created_at
+      - customer
+      - id
+      - order_items
+      - status
+      - updated_at
+      - warehouse
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          title: Quantity product in order
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+          title: Unit price in order
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order item created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order item updated
+      required:
+      - created_at
+      - id
+      - product
+      - quantity
+      - unit_price
+      - updated_at
+    OrderItemCreate:
+      type: object
+      properties:
+        product:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          title: Quantity product in order
+      required:
+      - product
+      - quantity
+    OrderUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        warehouse:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemCreate'
+          minItems: 1
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order updated
+      required:
+      - created_at
+      - customer
+      - id
+      - order_items
+      - status
+      - updated_at
+      - warehouse
     PatchedCategory:
       type: object
       properties:
@@ -748,6 +1019,36 @@ components:
           format: date-time
           readOnly: true
           title: Category update
+    PatchedOrderUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        warehouse:
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemCreate'
+          minItems: 1
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Order updated
     PatchedProduct:
       type: object
       properties:
@@ -938,6 +1239,20 @@ components:
       - sku
       - updated_at
       - weight_kg
+    StatusEnum:
+      enum:
+      - draft
+      - reserved
+      - confirmed
+      - cancelled
+      - expired
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `reserved` - Reserved
+        * `confirmed` - Confirmed
+        * `cancelled` - Cancelled
+        * `expired` - Expired
     Stock:
       type: object
       properties:
