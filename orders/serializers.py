@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from orders.models import Order, OrderItem
@@ -90,7 +91,11 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         order = Order.objects.create(customer=customer, **validated_data)
         for order_item in order_items:
             unit_price = order_item["product"].price
-            OrderItem.objects.create(order=order, unit_price=unit_price, **order_item)
+            OrderItem.objects.create(
+                order=order,
+                unit_price=unit_price,
+                **order_item,
+            )
 
         return order
 
@@ -101,41 +106,57 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
 class OrderUpdateSerializer(OrderCreateSerializer):
     def update(self, instance, validated_data):
-        new_order_items = validated_data.pop("order_items", None)
+        with transaction.atomic():
+            order_obj = Order.objects.select_for_update().get(id=instance.id)
+            new_order_items = validated_data.pop("order_items", None)
 
-        if instance.status != Order.Status.DRAFT:
-            raise serializers.ValidationError(
-                "Only orders with draft status can be changed"
+            if order_obj.status != Order.Status.DRAFT:
+                raise serializers.ValidationError(
+                    "Only orders with draft status can be changed"
+                )
+
+            order_obj.warehouse = validated_data.pop(
+                "warehouse",
+                order_obj.warehouse
             )
+            order_obj.save()
 
-        instance.warehouse = validated_data.pop("warehouse", instance.warehouse)
-        instance.save()
+            order_obj_order_items = order_obj.order_items.all()
 
-        instance_order_items = instance.order_items.all()
+            existing_order_items_by_product_id = {
+                order_item.product_id: order_item
+                for order_item in order_obj_order_items
+            }
 
-        existing_order_items_by_product_id = {order_item.product_id: order_item for order_item in instance_order_items}
+            if new_order_items is not None:
+                existing_items_to_update = []
+                new_items_to_create = []
+                for new_order_item in new_order_items:
+                    if new_order_item["product"].id in existing_order_items_by_product_id:
+                       existing_items_to_update.append(new_order_item)
+                    else:
+                       new_items_to_create.append(new_order_item)
 
-        if new_order_items is not None:
-            existing_items_to_update = []
-            new_items_to_create = []
-            for new_order_item in new_order_items:
-                if new_order_item["product"].id in existing_order_items_by_product_id:
-                   existing_items_to_update.append(new_order_item)
-                else:
-                   new_items_to_create.append(new_order_item)
+                for item_to_update in existing_items_to_update:
+                    updating_item = existing_order_items_by_product_id.get(
+                        item_to_update["product"].id
+                    )
+                    updating_item.quantity = item_to_update["quantity"]
+                    updating_item.save()
 
-            for item_to_update in existing_items_to_update:
-                updating_item = existing_order_items_by_product_id.get(item_to_update["product"].id)
-                updating_item.quantity = item_to_update["quantity"]
-                updating_item.save()
+                for new_item_to_create in new_items_to_create:
+                    unit_price = new_item_to_create["product"].price
+                    OrderItem.objects.create(
+                        order=order_obj,
+                        unit_price=unit_price,
+                        **new_item_to_create
+                    )
 
-            for new_item_to_create in new_items_to_create:
-                unit_price = new_item_to_create["product"].price
-                OrderItem.objects.create(order=instance, unit_price=unit_price, **new_item_to_create)
+                product_items_in_update_request = set(
+                    item["product"].id for item in new_order_items
+                )
+                for item in order_obj_order_items:
+                    if item.product_id not in product_items_in_update_request:
+                        item.delete()
 
-            product_items_in_update_request = set(item["product"].id for item in new_order_items)
-            for item in instance_order_items:
-                if item.product_id not in product_items_in_update_request:
-                    item.delete()
-
-        return instance
+            return order_obj
