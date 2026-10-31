@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 
 from orders.models import Order, OrderItem
 from payments.services import create_payment
@@ -21,6 +24,7 @@ def reserve_order(order_id: int) -> None:
             check_stock_and_available_quantity(order_obj_items, stocks_by_product_id)
             change_stocks_reserved_quantity(order_obj_items, stocks_by_product_id)
             order_obj.status = Order.Status.RESERVED
+            order_obj.datetime_confirm_advance = timezone.now() + timedelta(days=3)
             order_obj.save()
             create_payment(order_id)
     except (InsufficientStockException, StockNotFoundException) as error:
@@ -73,6 +77,7 @@ def get_product_stocks(
         for stock in stocks_for_order
     }
     return stocks_by_product_id
+
 
 def check_stock_and_available_quantity(
     order_obj_items: list[OrderItem],

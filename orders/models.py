@@ -30,6 +30,11 @@ class Order(models.Model):
         choices=Status.choices,
         default=Status.DRAFT,
     )
+    datetime_confirm_advance = models.DateTimeField(
+        verbose_name="Datetime to confirm advance",
+        null=True,
+        blank=True
+    )
     created_at = models.DateTimeField(verbose_name="Order created", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Order updated", auto_now=True)
 
