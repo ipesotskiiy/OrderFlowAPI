@@ -7,6 +7,7 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     UpdateModelMixin,
 )
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -16,11 +17,17 @@ from orders.serializers import (
     OrderSerializer,
     OrderUpdateSerializer,
 )
+from payments.exceptions import (
+    DoubleAdvancePaidException,
+    InvalidOrderStatusForPaymentException,
+)
+from payments.models import Payment
+from payments.services import confirm_receipt_advance_payment
 from reservations.exceptions import (
-    InsufficientStockException,
-    StockNotFoundException,
-    InvalidOrderStatusException,
     EmptyOrderException,
+    InsufficientStockException,
+    InvalidOrderStatusException,
+    StockNotFoundException,
 )
 from reservations.services import reserve_order
 
@@ -74,7 +81,7 @@ class OrderViewSet(
             return Response(
                 "Order successfully reserved",
                 status=status.HTTP_200_OK,
-        )
+            )
         except (
             InsufficientStockException,
             StockNotFoundException,
@@ -83,5 +90,29 @@ class OrderViewSet(
         ) as error:
             return Response(
                 error.message,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="confirm_advance",
+        permission_classes=[IsAdminUser],
+    )
+    def confirm_advance(self, request, pk):
+        try:
+            order_obj = self.get_object()
+            confirm_receipt_advance_payment(order_obj.id)
+            return Response(
+                "Payment advance successfully confirmed",
+                status=status.HTTP_200_OK,
+            )
+        except (
+            InvalidOrderStatusForPaymentException,
+            DoubleAdvancePaidException,
+            Payment.DoesNotExist,
+        ) as error:
+            return Response(
+                str(error),
                 status=status.HTTP_400_BAD_REQUEST,
             )

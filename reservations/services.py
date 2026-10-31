@@ -2,11 +2,12 @@ from django.db import transaction
 from django.db.models import F
 
 from orders.models import Order, OrderItem
+from payments.services import create_payment
 from reservations.exceptions import (
-    InsufficientStockException,
-    StockNotFoundException,
-    InvalidOrderStatusException,
     EmptyOrderException,
+    InsufficientStockException,
+    InvalidOrderStatusException,
+    StockNotFoundException,
 )
 from reservations.models import ReservationFailure
 from stocks.models import Stock
@@ -21,6 +22,7 @@ def reserve_order(order_id: int) -> None:
             change_stocks_reserved_quantity(order_obj_items, stocks_by_product_id)
             order_obj.status = Order.Status.RESERVED
             order_obj.save()
+            create_payment(order_id)
     except (InsufficientStockException, StockNotFoundException) as error:
         if isinstance(error, InsufficientStockException):
             reason = ReservationFailure.ReasonFailure.INSUFFICIENT_STOCK
