@@ -5,12 +5,14 @@ from django.utils import timezone
 
 from orders.models import Order, OrderItem
 from payments.exceptions import (
+    ConfirmationTimeExpiredException,
     DoubleAdvancePaidException,
     InvalidOrderStatusForPaymentException,
     OrderHasPaymentException,
     PaymentPartException,
 )
 from payments.models import Payment
+from reservations.exceptions import EmptyDatetimeConfirmAdvance
 
 
 def create_payment(order_id: int):
@@ -38,6 +40,10 @@ def get_order_obj(order_id: int) -> Order:
 
     if order_obj.status != Order.Status.RESERVED:
         raise InvalidOrderStatusForPaymentException()
+    if not order_obj.datetime_confirm_advance:
+        raise EmptyDatetimeConfirmAdvance(order_obj.id)
+    if timezone.now() >= order_obj.datetime_confirm_advance:
+        raise ConfirmationTimeExpiredException(order_obj.id)
     return order_obj
 
 

@@ -18,15 +18,17 @@ from orders.serializers import (
     OrderUpdateSerializer,
 )
 from payments.exceptions import (
+    ConfirmationTimeExpiredException,
     DoubleAdvancePaidException,
     InvalidOrderStatusForPaymentException,
 )
 from payments.models import Payment
 from payments.services import confirm_receipt_advance_payment
 from reservations.exceptions import (
+    EmptyDatetimeConfirmAdvance,
     EmptyOrderException,
     InsufficientStockException,
-    InvalidOrderStatusException,
+    InvalidOrderStatusReserveException,
     StockNotFoundException,
 )
 from reservations.services import reserve_order
@@ -85,7 +87,7 @@ class OrderViewSet(
         except (
             InsufficientStockException,
             StockNotFoundException,
-            InvalidOrderStatusException,
+            InvalidOrderStatusReserveException,
             EmptyOrderException,
         ) as error:
             return Response(
@@ -111,6 +113,8 @@ class OrderViewSet(
             InvalidOrderStatusForPaymentException,
             DoubleAdvancePaidException,
             Payment.DoesNotExist,
+            ConfirmationTimeExpiredException,
+            EmptyDatetimeConfirmAdvance,
         ) as error:
             return Response(
                 str(error),

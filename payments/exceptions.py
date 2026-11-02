@@ -40,3 +40,11 @@ class DoubleAdvancePaidException(Exception):
 
     def __str__(self) -> str:
         return self.message
+
+
+class ConfirmationTimeExpiredException(Exception):
+    def __init__(self, order_obj_id):
+        self.message = f"Order {order_obj_id} confirmation time has expired."
+
+    def __str__(self) -> str:
+        return self.message
