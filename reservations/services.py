@@ -50,9 +50,11 @@ def reserve_order(order_id: int) -> None:
 def get_order_and_order_item_obj(
         order_id: int,
         target: str,
-) -> tuple[Order, list[OrderItem]]:
+) -> tuple[Order, None] | tuple[Order, list[OrderItem]]:
     try:
         order_obj = Order.objects.select_for_update().get(id=order_id)
+        if target == "expire" and order_obj.status == Order.Status.EXPIRED:
+            return order_obj, None
     except Order.DoesNotExist:
         raise Order.DoesNotExist("Order not found")
 
@@ -123,13 +125,14 @@ def change_order_to_expired(order_id: int) -> None:
             order_id,
             "expire",
         )
-        _, stocks_by_product_id = get_product_stocks(
-            order_obj,
-            order_obj_items
-        )
-        change_stocks_expired_quantity(order_obj_items, stocks_by_product_id)
-        order_obj.status = Order.Status.EXPIRED
-        order_obj.save()
+        if order_obj.status != Order.Status.EXPIRED:
+            _, stocks_by_product_id = get_product_stocks(
+                order_obj,
+                order_obj_items
+            )
+            change_stocks_expired_quantity(order_obj_items, stocks_by_product_id)
+            order_obj.status = Order.Status.EXPIRED
+            order_obj.save()
 
 def change_stocks_expired_quantity(
     order_obj_items: list[OrderItem],
