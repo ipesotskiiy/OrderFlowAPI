@@ -24,7 +24,10 @@ def get_order_log(order_id: int) -> None:
 def expire_order(order_id: int) -> None:
     try:
         change_order_to_expired(order_id)
-        task_logger.info("Success expire order %s", order_id)
+        task_logger.info(
+            "Finished processing order expiration %s",
+            order_id,
+        )
     except (
             InvalidOrderStatusExpireException,
             EmptyDatetimeConfirmAdvance,
@@ -61,7 +64,10 @@ def check_order_to_expire() -> None:
         task_logger.info("Processing order %s completed", order_id)
         published_order_tasks_count += 1
 
-    task_logger.info("Processed %s orders", published_order_tasks_count)
+    task_logger.info(
+        "Published %s expiration tasks",
+        published_order_tasks_count,
+    )
     task_logger.info(
         "Completed process expire orders"
     )
