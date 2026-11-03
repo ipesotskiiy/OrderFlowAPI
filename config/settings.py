@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'drf_spectacular',
+    'django_celery_beat',
 
     'accounts',
     'catalog',
@@ -204,3 +205,12 @@ CELERY_TRACK_STARTED = True
 
 CELERY_CONTROL_QUEUE_DURABLE = True
 CELERY_EVENT_QUEUE_DURABLE = True
+
+# Celery Beat
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULE = {
+    "check_orders_to_expire": {
+        "task": "reservations.tasks.check_order_to_expire",
+        "schedule": timedelta(seconds=60)
+    }
+}
