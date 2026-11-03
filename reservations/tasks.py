@@ -1,6 +1,8 @@
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from django.utils import timezone
 
+from orders.models import Order
 from reservations.exceptions import (
     EmptyDatetimeConfirmAdvance,
     EmptyOrderException,
@@ -37,3 +39,30 @@ def expire_order(order_id: int) -> None:
             error,
         )
         raise
+
+
+@shared_task
+def check_order_to_expire() -> None:
+    task_logger.info(
+        "Start process expire orders"
+    )
+    orders_ids_to_expire =Order.objects.filter(
+        status=Order.Status.RESERVED,
+        datetime_confirm_advance__lte=timezone.now(),
+    ).values_list("id", flat=True)
+    task_logger.info(
+        "Count orders to expire %s",
+        len(orders_ids_to_expire)
+    )
+    published_order_tasks_count = 0
+    for order_id in orders_ids_to_expire:
+        task_logger.info("Processing order %s", order_id)
+        expire_order.delay(order_id)
+        task_logger.info("Processing order %s completed", order_id)
+        published_order_tasks_count += 1
+
+    task_logger.info("Processed %s orders", published_order_tasks_count)
+    task_logger.info(
+        "Completed process expire orders"
+    )
+
