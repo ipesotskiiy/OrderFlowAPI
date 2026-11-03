@@ -3,6 +3,7 @@ name = "orderflowapi"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "celery[rabbitmq]>=5.6.3",
     "django>=5.2, <5.3",
     "django-filter>=26.1",
     "djangorestframework>=3.18.0",
