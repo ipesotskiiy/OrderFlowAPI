@@ -1,7 +1,3 @@
-from orders.models import OrderItem
-from stocks.models import Stock
-
-
 class InvalidOrderStatusCancelException(Exception):
     def __init__(self):
         self.message = "Orders with status Confirmed only can be cancelled"
@@ -33,18 +29,6 @@ class LateCancelOrderException(Exception):
     def __str__(self) -> str:
         return self.message
 
-
-class ReservedQuantityStockException(Exception):
-    def __init__(self, stock: Stock, order_item: OrderItem):
-        self.message = (
-            f"Stock {stock.id} reserved quantity "
-            f"{stock.reserved_quantity} lower than "
-            f"order item {order_item.id} quantity "
-            f"{order_item.quantity}"
-        )
-
-    def __str__(self) -> str:
-        return self.message
 
 class AdvanceReturnException(Exception):
     def __init__(self, order_id: int):

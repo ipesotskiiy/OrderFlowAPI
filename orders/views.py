@@ -11,12 +11,20 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from orders.exceptions import (
+    AdvanceNotPaidException,
+    AdvanceReturnException,
+    InvalidOrderStatusCancelException,
+    LateCancelOrderException,
+    NoAdvancePaidDateException,
+)
 from orders.models import Order
 from orders.serializers import (
     OrderCreateSerializer,
     OrderSerializer,
     OrderUpdateSerializer,
 )
+from orders.services import cancel_confirmed_order
 from payments.exceptions import (
     ConfirmationTimeExpiredException,
     DoubleAdvancePaidException,
@@ -29,6 +37,7 @@ from reservations.exceptions import (
     EmptyOrderException,
     InsufficientStockException,
     InvalidOrderStatusReserveException,
+    ReservedQuantityLowerOrderItemQuantityException,
     StockNotFoundException,
 )
 from reservations.services import reserve_order
@@ -64,13 +73,20 @@ class OrderViewSet(
         return OrderCreateSerializer
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            return Order.objects.prefetch_related("order_items").all()
-        return Order.objects.filter(
-            customer=self.request.user
-        ).prefetch_related(
-            "order_items"
-        )
+        if self.action == "cancel_order":
+            return Order.objects.filter(
+                customer=self.request.user
+            ).prefetch_related(
+                "order_items"
+            )
+        else:
+            if self.request.user.is_staff:
+                return Order.objects.prefetch_related("order_items").all()
+            return Order.objects.filter(
+                customer=self.request.user
+            ).prefetch_related(
+                "order_items"
+            )
 
     def perform_create(self, serializer):
         serializer.save(customer=self.request.user)
@@ -115,6 +131,34 @@ class OrderViewSet(
             Payment.DoesNotExist,
             ConfirmationTimeExpiredException,
             EmptyDatetimeConfirmAdvance,
+        ) as error:
+            return Response(
+                str(error),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="cancel",
+    )
+    def cancel_order(self, request, pk):
+        try:
+            order_obj = self.get_object()
+            cancel_confirmed_order(order_obj.id)
+            return Response(
+                "Order successfully cancelled",
+                status=status.HTTP_200_OK,
+            )
+        except (
+            InvalidOrderStatusCancelException,
+            AdvanceNotPaidException,
+            NoAdvancePaidDateException,
+            LateCancelOrderException,
+            StockNotFoundException,
+            ReservedQuantityLowerOrderItemQuantityException,
+            AdvanceReturnException,
+            EmptyOrderException,
         ) as error:
             return Response(
                 str(error),
