@@ -4,6 +4,7 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
+from orders.exceptions import InvalidOrderStatusCancelException
 from orders.models import Order, OrderItem
 from payments.services import create_payment
 from reservations.exceptions import (
@@ -71,6 +72,9 @@ def get_order_and_order_item_obj(
             raise EmptyDatetimeConfirmAdvance(order_obj.id)
         if timezone.now() < order_obj.datetime_confirm_advance:
             raise InvalidTimeExpireOrderException()
+    elif target == "cancel":
+        if order_obj.status != Order.Status.CONFIRMED:
+            raise InvalidOrderStatusCancelException()
 
     order_obj_items = list(OrderItem.objects.filter(order_id=order_id))
     if not order_obj_items:
