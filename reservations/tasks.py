@@ -11,7 +11,10 @@ from reservations.exceptions import (
     ReservedQuantityLowerOrderItemQuantityException,
     StockNotFoundException,
 )
-from reservations.services import change_order_to_expired
+from reservations.services import (
+    change_order_to_expired,
+    drop_old_reservation_failures,
+)
 
 task_logger = get_task_logger(__name__)
 
@@ -72,3 +75,11 @@ def check_order_to_expire() -> None:
         "Completed process expire orders"
     )
 
+
+@shared_task
+def drop_old_reservation_celery_task():
+    count_drop_reservations = drop_old_reservation_failures()
+    task_logger.info(
+        "Deleted %s expired reservation failures",
+        count_drop_reservations,
+    )

@@ -212,5 +212,9 @@ CELERY_BEAT_SCHEDULE = {
     "check_orders_to_expire": {
         "task": "reservations.tasks.check_order_to_expire",
         "schedule": timedelta(seconds=60)
+    },
+    "drop_old_reservationts_failures": {
+        "task": "reservations.tasks.drop_old_reservation_celery_task",
+        "schedule": timedelta(days=1)
     }
 }

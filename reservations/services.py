@@ -155,3 +155,18 @@ def change_stocks_expired_quantity(
             )
         stock.reserved_quantity = F("reserved_quantity") - order_item.quantity
         stock.save()
+
+
+def drop_old_reservation_failures() -> int:
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    reservations_to_drop = ReservationFailure.objects.filter(
+        created_at__lte=thirty_days_ago
+    )
+    result_drop = reservations_to_drop.delete()
+    count_drop_reservations = result_drop[1].get(
+        ReservationFailure._meta.label,
+        0,
+    )
+
+    return count_drop_reservations
+
